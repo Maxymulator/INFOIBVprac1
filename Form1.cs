@@ -144,14 +144,38 @@ namespace INFOIBV
             return Image;
         }
         //Exercise 3: Gaussian filter
-        public double[,] CreateGaussianFilter(int kernelsize, int sigma)
+        public double[,] CreateGaussianFilter(int kernelsize, double sigma)
         {
-            double kernelwidth = Math.Sqrt(kernelsize);
-            double[,] kernel = new double[(int)kernelwidth, (int)kernelwidth];
-            for (int y = 0; y < sigma; y++)
-                for (int x = 0; x < sigma; x++)
+            double[,] kernel = new double[kernelsize, kernelsize];
+            int offset = kernelsize / 2;
+            for (int y = offset, i = 0; y >= -offset; y--, i++)
+                for (int x = -offset, j = 0; x <= offset; x++, j++)
                 {
-                    kernel[x, y] = 1 / kernelsize;
+                    double s22 = (2 * (sigma * sigma));
+                    double x2 = x * x;
+                    double y2 = y * y;
+                    double exponent = (x2 + y2) / s22;
+                    double p = 1 / (2 * Math.PI * s22);
+                    double value = p * Math.Pow(Math.E, -exponent);
+                    kernel[i, j] = value;
+                }
+            double coefficient = 0;
+            for (int y = 0; y < kernelsize; y++)
+                for (int x = 0; x < kernelsize; x++)
+                {
+                    coefficient += kernel[x, y];
+                }
+
+            for (int y = 0; y < kernelsize; y++)
+                for (int x = 0; x < kernelsize; x++)
+                {
+                    kernel[x, y] = kernel[x, y] / coefficient;
+                }
+            double test = 0;
+            for (int y = 0; y < kernelsize; y++)
+                for (int x = 0; x < kernelsize; x++)
+                {
+                    test += kernel[x, y];
                 }
             return kernel;
         }

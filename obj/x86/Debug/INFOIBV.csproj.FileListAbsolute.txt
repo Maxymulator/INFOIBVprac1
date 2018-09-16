@@ -1,0 +1,8 @@
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\obj\x86\Debug\INFOIBV.exe
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\obj\x86\Debug\INFOIBV.pdb
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\bin\Debug\INFOIBV.exe
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\bin\Debug\INFOIBV.pdb
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\obj\x86\Debug\INFOIBV.csprojResolveAssemblyReference.cache
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\obj\x86\Debug\INFOIBV.INFOIBV.resources
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\obj\x86\Debug\INFOIBV.Properties.Resources.resources
+C:\Users\Mo's PC\Documents\GitHub\INFOIBVprac1\obj\x86\Debug\INFOIBV.csproj.GenerateResource.Cache
