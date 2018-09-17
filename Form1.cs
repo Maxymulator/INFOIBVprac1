@@ -72,7 +72,9 @@ namespace INFOIBV
             //Exercise 2: Contrast adjustment
             //Image = ApplyContrastAdjustment(Image);
             //Exercise 4: Linear filtering:
-            Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
+            //Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
+            //Exercise 5: non-linear filtering:
+            Image = ApplyNonLinearFiltering(Image, 4);
             // Copy array to output Bitmap
             for (int x = 0; x < InputImage.Size.Width; x++)
             {
@@ -212,11 +214,47 @@ namespace INFOIBV
             return newImage;
         }
         //Exercise 5: Nonlinear filtering
-        public Color[,] ApplyNonLinearFiltering()
+        public Color[,] ApplyNonLinearFiltering(Color[,] inputImage, int medianSize)
         {
-            Color[,] Image = null;
 
-            return Image;
+
+
+            int kernelSize = (int)Math.Sqrt((medianSize * 2)+1);
+            int offset = kernelSize / 2;
+            Color[,] newImage = inputImage;
+
+
+
+            for (int y = 0; y < InputImage.Size.Height; y++)
+            {
+                if (y >= offset && y < InputImage.Size.Height - offset)
+                    for (int x = 0; x < InputImage.Size.Width; x++)
+                    {
+                        if (x >= offset && x < InputImage.Size.Width - offset)
+                        {
+                            
+                            double[] Rnew = new double[kernelSize*kernelSize];
+                            double[] Gnew = new double[kernelSize* kernelSize];
+                            double[] Bnew = new double[kernelSize*kernelSize];
+                            //itterate over kernel
+                            int k = 0;
+                            for (int j = -offset, kj = 0; j <= offset; j++, kj++)
+                                for (int i = -offset, ki = 0; i <= offset; i++, ki++)
+                                {
+                                    Rnew[k] = (double)inputImage[x + i, y + j].R;
+                                    Gnew[k] = (double)inputImage[x + i, y + j].G;
+                                    Bnew[k] = (double)inputImage[x + i, y + j].B;
+                                    k++;
+                                }
+                            Array.Sort(Rnew);
+                            Array.Sort(Gnew);
+                            Array.Sort(Bnew);
+                                newImage[x, y] = Color.FromArgb((int)Rnew[medianSize], (int)Gnew[medianSize], (int)Bnew[medianSize]);
+                                progressBar.PerformStep();
+                        }
+                    }
+            }
+            return newImage;
         }
         //Exercise 6: Edge detection
         public Color[,] ApplyEdgeDetection()
