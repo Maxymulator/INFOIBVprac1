@@ -74,7 +74,9 @@ namespace INFOIBV
             //Exercise 4: Linear filtering:
             //Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
             //Exercise 5: non-linear filtering:
-            Image = ApplyNonLinearFiltering(Image, 4);
+            //Image = ApplyNonLinearFiltering(Image, 4);
+            //Bonus 1: Histogram equalization
+            Image = ApplyEqualization(Image);
             // Copy array to output Bitmap
             for (int x = 0; x < InputImage.Size.Width; x++)
             {
@@ -88,7 +90,7 @@ namespace INFOIBV
             progressBar.Visible = false;                                    // Hide progress bar
         }
 
-       
+
 
 
 
@@ -135,10 +137,10 @@ namespace INFOIBV
                 for (int y = 0; y < InputImage.Size.Height; y++)
                 {
                     Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
-                    int Rnew = (pixelColor.R- colorHistogram.ArLow)* (255/(colorHistogram.ArHigh-colorHistogram.ArLow));
+                    int Rnew = (pixelColor.R - colorHistogram.ArLow) * (255 / (colorHistogram.ArHigh - colorHistogram.ArLow));
                     int Gnew = (pixelColor.G - colorHistogram.AgLow) * (255 / (colorHistogram.AgHigh - colorHistogram.AgLow));
                     int Bnew = (pixelColor.B - colorHistogram.AbLow) * (255 / (colorHistogram.AbHigh - colorHistogram.AbLow));
-                    Color updatedColor = Color.FromArgb(Rnew,Gnew,Bnew);
+                    Color updatedColor = Color.FromArgb(Rnew, Gnew, Bnew);
                     Image[x, y] = updatedColor;
                     progressBar.PerformStep();
                 }
@@ -219,7 +221,7 @@ namespace INFOIBV
 
 
 
-            int kernelSize = (int)Math.Sqrt((medianSize * 2)+1);
+            int kernelSize = (int)Math.Sqrt((medianSize * 2) + 1);
             int offset = kernelSize / 2;
             Color[,] newImage = inputImage;
 
@@ -232,10 +234,10 @@ namespace INFOIBV
                     {
                         if (x >= offset && x < InputImage.Size.Width - offset)
                         {
-                            
-                            double[] Rnew = new double[kernelSize*kernelSize];
-                            double[] Gnew = new double[kernelSize* kernelSize];
-                            double[] Bnew = new double[kernelSize*kernelSize];
+
+                            double[] Rnew = new double[kernelSize * kernelSize];
+                            double[] Gnew = new double[kernelSize * kernelSize];
+                            double[] Bnew = new double[kernelSize * kernelSize];
                             //itterate over kernel
                             int k = 0;
                             for (int j = -offset, kj = 0; j <= offset; j++, kj++)
@@ -249,8 +251,8 @@ namespace INFOIBV
                             Array.Sort(Rnew);
                             Array.Sort(Gnew);
                             Array.Sort(Bnew);
-                                newImage[x, y] = Color.FromArgb((int)Rnew[medianSize], (int)Gnew[medianSize], (int)Bnew[medianSize]);
-                                progressBar.PerformStep();
+                            newImage[x, y] = Color.FromArgb((int)Rnew[medianSize], (int)Gnew[medianSize], (int)Bnew[medianSize]);
+                            progressBar.PerformStep();
                         }
                     }
             }
@@ -271,12 +273,29 @@ namespace INFOIBV
             return Image;
         }
         //Bonus 1: Histogram equalization
-        public Color[,] ApplyEqualization()
+        public Color[,] ApplyEqualization(Color[,] Image)
         {
-            Color[,] Image = null;
+            ColorHistogram colorHistogram = new ColorHistogram(Image);
+            for (int y = 0; y < InputImage.Size.Height; y++)
+            {
+                for (int x = 0; x < InputImage.Size.Width; x++)
+                {
+                    Color pixelColor = Image[x, y];                         // Get the pixel color at coordinate (x,y)
+                    int R = pixelColor.R;
+                    int G = pixelColor.G;
+                    int B = pixelColor.B;
+                    double _255_MN = (double)255 / (InputImage.Size.Width * InputImage.Size.Height);
+                    double newR = colorHistogram.CummulativeHistogramR[R] * _255_MN;
+                    double newG = colorHistogram.CummulativeHistogramG[G] * _255_MN;
+                    double newB = colorHistogram.CummulativeHistogramB[B] * _255_MN;
+                    Color updatedColor = Color.FromArgb((int)newR, (int)newG, (int)newB);
+                    Image[x, y] = updatedColor;
+                    progressBar.PerformStep();
 
-            return Image;
-        }
+                }
+            }
+                return Image;
+            }
         //Bonus 2: Edge sharpening
         public Color[,] ApplyEdgeSharpening()
         {

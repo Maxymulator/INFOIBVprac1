@@ -13,16 +13,21 @@ namespace INFOIBV
         public int[] HistogramR = new int[256];
         public int[] HistogramG = new int[256];
         public int[] HistogramB = new int[256];
+        public int[] CummulativeHistogramR = new int[256];
+        public int[] CummulativeHistogramG = new int[256];
+        public int[] CummulativeHistogramB = new int[256];
         public int ArLow = 0;
         public int ArHigh = 0;
         public int AgLow = 0;
         public int AgHigh = 0;
         public int AbLow = 0;
         public int AbHigh = 0;
+
         public ColorHistogram(Color[,] Image)
         {
             ComputeColorHistogram(Image);
             ComputeLowAndHigh();
+            ComputeCummulativeHistogram(Image);
         }
 
 
@@ -39,6 +44,22 @@ namespace INFOIBV
                 }
             }
 
+        }
+
+        public void ComputeCummulativeHistogram(Color[,] Image) {
+            for (int i= 0; i<256; i++) {
+                if (i == 0)
+                {
+                    CummulativeHistogramR[i] = HistogramR[i];
+                    CummulativeHistogramG[i] = HistogramG[i];
+                    CummulativeHistogramB[i] = HistogramB[i];
+                }
+                else {
+                    CummulativeHistogramR[i] = HistogramR[i] + CummulativeHistogramR[i-1];
+                    CummulativeHistogramG[i] = HistogramG[i] + CummulativeHistogramG[i-1];
+                    CummulativeHistogramB[i] = HistogramB[i] + CummulativeHistogramB[i-1];
+                }
+            }
         }
 
         public void ComputeLowAndHigh()
