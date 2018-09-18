@@ -69,14 +69,28 @@ namespace INFOIBV
             //==========================================================================================
             //Exercise 1: Applying grayscale
             //Image = ApplyGrayScale(Image);
+
             //Exercise 2: Contrast adjustment
             //Image = ApplyContrastAdjustment(Image);
+
             //Exercise 4: Linear filtering:
-            //Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
+            Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
+
             //Exercise 5: non-linear filtering:
             //Image = ApplyNonLinearFiltering(Image, 4);
+
+            //Exercise 6: Edge detection
+            //Image = ApplyEdgeDetection(Image);
+
+            //Exercise 7: Thresholding
+            //Image = ApplyThresholding(Image, 150, false);
+
             //Bonus 1: Histogram equalization
-            Image = ApplyEqualization(Image);
+            //Image = ApplyEqualization(Image);
+
+            //Bonus 2:
+            //Image =
+
             // Copy array to output Bitmap
             for (int x = 0; x < InputImage.Size.Width; x++)
             {
@@ -92,7 +106,19 @@ namespace INFOIBV
 
 
 
+        public Color[,] CutEdges(Color[,] Image, int borderSize)
+        {
+            Color[,] newImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
 
+            for (int y = 0; y < InputImage.Size.Height; y++)
+                for (int x = 0; x < InputImage.Size.Width; x++)
+                {
+                    if (x < InputImage.Size.Width - (borderSize * 2))
+                        if (y < InputImage.Size.Height - (borderSize * 2))
+                            newImage[x, y] = Image[x + borderSize, y + borderSize];
+                }
+            return newImage;
+        }
 
         public Color[,] ApplyNegation(Color[,] Image)
         {
@@ -208,13 +234,27 @@ namespace INFOIBV
                                     Bnew += inputImage[x + i, y + j].B * kernel[ki, kj];
                                     Rnew += inputImage[x + i, y + j].R * kernel[ki, kj];
                                 }
+
+                            Rnew = Clamp(Rnew);
+                            Gnew = Clamp(Gnew);
+                            Bnew = Clamp(Bnew);
+
                             newImage[x, y] = Color.FromArgb((int)Rnew, (int)Gnew, (int)Bnew);
                             progressBar.PerformStep();
                         }
                     }
             }
+            newImage = CutEdges(newImage, offset);
             return newImage;
         }
+
+        public double Clamp(double value)
+        {
+            if (value < 0) value = 0;
+            else if (value > 255) value = 255;
+            return value;
+        }
+
         //Exercise 5: Nonlinear filtering
         public Color[,] ApplyNonLinearFiltering(Color[,] inputImage, int medianSize)
         {
@@ -259,18 +299,36 @@ namespace INFOIBV
             return newImage;
         }
         //Exercise 6: Edge detection
-        public Color[,] ApplyEdgeDetection()
+        public Color[,] ApplyEdgeDetection(Color[,] Image)
         {
-            Color[,] Image = null;
 
             return Image;
         }
         //Exercise 7: Thresholding
-        public Color[,] ApplyThresholding()
+        public Color[,] ApplyThresholding(Color[,] Image, int threshold, bool invert)
         {
-            Color[,] Image = null;
+            Color[,] newImage = Image;
+            int pixelValue;
+            Image = ApplyGrayScale(Image);
 
-            return Image;
+            for (int y = 0; y < InputImage.Size.Height; y++)
+            {
+                for (int x = 0; x < InputImage.Size.Width; x++)
+                {
+                    pixelValue = Image[x, y].R;
+
+                    if (pixelValue < threshold && !invert)
+                        newImage[x, y] = Color.Black;
+                    else if (pixelValue >= threshold && !invert)
+                        newImage[x, y] = Color.White;
+                    else if (pixelValue < threshold && invert)
+                        newImage[x, y] = Color.White;
+                    else
+                        newImage[x, y] = Color.Black;
+                    progressBar.PerformStep();
+                }
+            }
+            return newImage;
         }
         //Bonus 1: Histogram equalization
         public Color[,] ApplyEqualization(Color[,] Image)
