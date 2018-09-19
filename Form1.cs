@@ -74,13 +74,13 @@ namespace INFOIBV
             //Image = ApplyContrastAdjustment(Image);
 
             //Exercise 4: Linear filtering:
-            Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
+            //Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
 
             //Exercise 5: non-linear filtering:
             //Image = ApplyNonLinearFiltering(Image, 4);
 
             //Exercise 6: Edge detection
-            //Image = ApplyEdgeDetection(Image);
+            Image = ApplyEdgeDetection(Image, Laplacian3x3);
 
             //Exercise 7: Thresholding
             //Image = ApplyThresholding(Image, 150, false);
@@ -227,12 +227,12 @@ namespace INFOIBV
                             double Gnew = 0;
                             double Bnew = 0;
                             //itterate over kernel
-                            for (int j = -offset, kj = 0; j <= offset; j++, kj++)
-                                for (int i = -offset, ki = 0; i <= offset; i++, ki++)
+                            for (int v = -offset, kj = 0; v <= offset; v++, kj++)
+                                for (int u = -offset, ki = 0; u <= offset; u++, ki++)
                                 {
-                                    Gnew += inputImage[x + i, y + j].G * kernel[ki, kj];
-                                    Bnew += inputImage[x + i, y + j].B * kernel[ki, kj];
-                                    Rnew += inputImage[x + i, y + j].R * kernel[ki, kj];
+                                    Gnew += inputImage[x + u, y + v].G * kernel[ki, kj];
+                                    Bnew += inputImage[x + u, y + v].B * kernel[ki, kj];
+                                    Rnew += inputImage[x + u, y + v].R * kernel[ki, kj];
                                 }
 
                             Rnew = Clamp(Rnew);
@@ -298,11 +298,88 @@ namespace INFOIBV
             }
             return newImage;
         }
-        //Exercise 6: Edge detection
-        public Color[,] ApplyEdgeDetection(Color[,] Image)
-        {
 
-            return Image;
+        public static double[,] Laplacian3x3
+        {
+            get
+            {
+                return new double[,]
+                {   { -1, -1, -1, },
+                    { -1,  8, -1, },
+                    { -1, -1, -1, }, };
+            }
+        }
+
+        //double[,] kernel = new double[,] { { 0, 1, 0 }, { 1, -4, 1 }, { 0, 1, 0 } };
+        //Exercise 6: Edge detection
+        public Color[,] ApplyEdgeDetection(Color[,] Image, double[,] kernel)
+        {
+            int kernelSize = kernel.GetLength(0);
+            int offset = kernelSize / 2;
+            Color[,] newImage = Image, newImageX = Image, newImageY = Image;
+
+            //calc x image
+            for (int y = 0; y < InputImage.Size.Height; y++)
+                if (y >= offset && y < InputImage.Size.Height - offset)
+                    for (int x = 0; x < InputImage.Size.Width; x++)
+                        if (x >= offset && x < InputImage.Size.Width - offset)
+                        {
+                            double red = 0;//= Image[x, y - 1].R + Image[x + 1, y].R + Image[x, y + 1].R + Image[x - 1, y].R - 4 * Image[x, y].R;
+                            double grn = 0;// Image[x, y - 1].G + Image[x + 1, y].G + Image[x, y + 1].G + Image[x - 1, y].G - 4 * Image[x, y].G;
+                            double blu = 0;//= Image[x, y - 1].B + Image[x + 1, y].B + Image[x, y + 1].B + Image[x - 1, y].B - 4 * Image[x, y].B;
+
+                            double[,] kernelX = new double[,] { { -1, 0, 1 }, { -1, 0, 1 }, { -1, 0, 1 } };
+                            double[,] kernelY = new double[,] { { -1, -1, -1 }, { 0, 0, 0 }, { 1, 1, 1 } };
+
+                            // calc x
+                            for (int v = -offset, kv = 0; v <= offset; v++, kv++)
+                                for (int u = -offset, ku = 0; u <= offset; u++, ku++)
+                                {
+                                    red += Image[x + u, y + v].G * kernelX[ku, kv];
+                                    grn += Image[x + u, y + v].B * kernelX[ku, kv];
+                                    blu += Image[x + u, y + v].R * kernelX[ku, kv];
+                                }
+
+                            red /= 6;
+                            grn /= 6;
+                            blu /= 6;
+
+                            red = Clamp(red);
+                            grn = Clamp(grn);
+                            blu = Clamp(blu);
+
+                            newImageX[x, y] = Color.FromArgb((int)red, (int)grn, (int)blu);
+
+                            // calc y
+                            for (int v = -offset, kv = 0; v <= offset; v++, kv++)
+                                for (int u = -offset, ku = 0; u <= offset; u++, ku++)
+                                {
+                                    red += Image[x + u, y + v].G * kernelY[ku, kv];
+                                    grn += Image[x + u, y + v].B * kernelY[ku, kv];
+                                    blu += Image[x + u, y + v].R * kernelY[ku, kv];
+                                }
+
+                            red /= 6;
+                            grn /= 6;
+                            blu /= 6;
+
+                            red = Clamp(red);
+                            grn = Clamp(grn);
+                            blu = Clamp(blu);
+
+                            newImageY[x, y] = Color.FromArgb((int)red, (int)grn, (int)blu);
+
+                            red = Math.Sqrt((newImageX[x, y].R * newImageX[x, y].R) + (newImageY[x, y].R * newImageY[x, y].R));
+                            grn = Math.Sqrt((newImageX[x, y].G * newImageX[x, y].G) + (newImageY[x, y].G * newImageY[x, y].G));
+                            blu = Math.Sqrt((newImageX[x, y].B * newImageX[x, y].B) + (newImageY[x, y].B * newImageY[x, y].B));
+
+                            red = Clamp(red);
+                            grn = Clamp(grn);
+                            blu = Clamp(blu);
+
+                            newImage[x, y] = Color.FromArgb((int)red, (int)grn, (int)blu);
+                        }
+            return newImageX;
         }
         //Exercise 7: Thresholding
         public Color[,] ApplyThresholding(Color[,] Image, int threshold, bool invert)
