@@ -52,7 +52,6 @@ namespace INFOIBV
             progressBar.Maximum = InputImage.Size.Width * InputImage.Size.Height;
             progressBar.Value = 1;
             progressBar.Step = 1;
-
             // Copy input Bitmap to array            
             for (int x = 0; x < InputImage.Size.Width; x++)
             {
@@ -67,31 +66,34 @@ namespace INFOIBV
             // example: create a negative image
             //   Image = ApplyNegation(Image);
             //==========================================================================================
+           
             //Exercise 1: Applying grayscale
-            //Image = ApplyGrayScale(Image);
+            Image = ApplyGrayScale(Image);
 
             //Exercise 2: Contrast adjustment
-            //Image = ApplyContrastAdjustment(Image);
+            Image = ApplyContrastAdjustment(Image);
+
+            //Exercise 3: Create Gaussian filter
+            double[,] GaussianKernel = CreateGaussianFilter(11, 3);
 
             //Exercise 4: Linear filtering:
-            //Image = ApplyLinearFiltering(Image, CreateGaussianFilter(81,9));
+            Image = ApplyLinearFiltering(Image, GaussianKernel);
 
             //Exercise 5: non-linear filtering:
-            //Image = ApplyNonLinearFiltering(Image, 4);
+            Image = ApplyNonLinearFiltering(Image, 25);
 
             //Exercise 6: Edge detection
-            Image = ApplyEdgeDetection(Image, Laplacian3x3);
+            Image = ApplyEdgeDetection(Image, Sobelx());
 
             //Exercise 7: Thresholding
-            //Image = ApplyThresholding(Image, 150, false);
+            Image = ApplyThresholding(Image, 20, false);
 
             //Bonus 1: Histogram equalization
-            //Image = ApplyEqualization(Image);
+            Image = ApplyEqualization(Image);
 
-            //Bonus 2:
-            //Image =
+            //Bonus 2: Edge Sharpening
+            Image = ApplyEdgeSharpening(Image);
 
-            // Copy array to output Bitmap
             for (int x = 0; x < InputImage.Size.Width; x++)
             {
                 for (int y = 0; y < InputImage.Size.Height; y++)
@@ -99,13 +101,12 @@ namespace INFOIBV
                     OutputImage.SetPixel(x, y, Image[x, y]);               // Set the pixel color at coordinate (x,y)
                 }
             }
-
             pictureBox2.Image = (Image)OutputImage;                         // Display output image
             progressBar.Visible = false;                                    // Hide progress bar
         }
 
 
-
+        //All Written Methods
         public Color[,] CutEdges(Color[,] Image, int borderSize)
         {
             Color[,] newImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
@@ -119,7 +120,6 @@ namespace INFOIBV
                 }
             return newImage;
         }
-
         public Color[,] ApplyNegation(Color[,] Image)
         {
             for (int x = 0; x < InputImage.Size.Width; x++)
@@ -134,8 +134,6 @@ namespace INFOIBV
             }
             return Image;
         }
-
-        //Exercise 1: Grayscale conversion
         public Color[,] ApplyGrayScale(Color[,] Image)
         {
             for (int x = 0; x < InputImage.Size.Width; x++)
@@ -154,10 +152,9 @@ namespace INFOIBV
             }
             return Image;
         }
-        //Exercise 2: Contrast adjustment
         public Color[,] ApplyContrastAdjustment(Color[,] Image)
         {
-            ColorHistogram colorHistogram = new ColorHistogram(Image);
+            ColorHistogram colorHistogram = new ColorHistogram(Image, InputImage.Size.Height, InputImage.Size.Width);
             for (int x = 0; x < InputImage.Size.Width; x++)
             {
                 for (int y = 0; y < InputImage.Size.Height; y++)
@@ -173,7 +170,6 @@ namespace INFOIBV
             }
             return Image;
         }
-        //Exercise 3: Gaussian filter
         public double[,] CreateGaussianFilter(int kernelsize, double sigma)
         {
             double[,] kernel = new double[kernelsize, kernelsize];
@@ -209,7 +205,6 @@ namespace INFOIBV
                 }
             return kernel;
         }
-        //Exercise 4: Linear Filtering
         public Color[,] ApplyLinearFiltering(Color[,] inputImage, double[,] kernel)
         {
             int kernelSize = kernel.GetLength(0);
@@ -247,21 +242,19 @@ namespace INFOIBV
             newImage = CutEdges(newImage, offset);
             return newImage;
         }
-
         public double Clamp(double value)
         {
             if (value < 0) value = 0;
             else if (value > 255) value = 255;
             return value;
         }
-
-        //Exercise 5: Nonlinear filtering
         public Color[,] ApplyNonLinearFiltering(Color[,] inputImage, int medianSize)
         {
 
 
 
-            int kernelSize = (int)Math.Sqrt((medianSize * 2) + 1);
+            int kernelSize = (int)Math.Sqrt(medianSize);
+            int median = medianSize / 2;
             int offset = kernelSize / 2;
             Color[,] newImage = inputImage;
 
@@ -291,14 +284,13 @@ namespace INFOIBV
                             Array.Sort(Rnew);
                             Array.Sort(Gnew);
                             Array.Sort(Bnew);
-                            newImage[x, y] = Color.FromArgb((int)Rnew[medianSize], (int)Gnew[medianSize], (int)Bnew[medianSize]);
+                            newImage[x, y] = Color.FromArgb((int)Rnew[median], (int)Gnew[median], (int)Bnew[median]);
                             progressBar.PerformStep();
                         }
                     }
             }
             return newImage;
         }
-
         public static double[,] Laplacian3x3
         {
             get
@@ -309,79 +301,61 @@ namespace INFOIBV
                     { -1, -1, -1, }, };
             }
         }
-
-        //double[,] kernel = new double[,] { { 0, 1, 0 }, { 1, -4, 1 }, { 0, 1, 0 } };
-        //Exercise 6: Edge detection
+        public Color[,] ColorImageTest(Color[,] Image, int i, int j)
+        {
+            for (int y = 0; y < InputImage.Size.Height; y++)
+            {
+                for (int x = 0; x < InputImage.Size.Width; x++)
+                {
+                    if (x <= 20 && y <= 40)
+                    {
+                        Image[x, y] = Color.FromArgb(255, 0, 0);
+                    }
+                }
+            }
+            return Image;
+        }
+        public double[,] Sobelx() {
+            double[,] Sx = { { -1, -2, -1 }, { 0, 0, 0 }, { 1, 2, 1 } };
+            return Sx;
+        }
+        public double[,] Sobely() {
+            double[,] Sy = { { -1, 0, 1 }, { 2, 0, 2 }, { -1, 0, 1 } };
+            return Sy;
+        }
+        public double[,] Prewittx() {
+            double[,] Px = { { -1, -1, -1 }, { 0, 0, 0 }, { 1, 1, 1 } };
+            return Px;
+        }
+        public double[,] Prewitty()
+        {
+            double[,] Py = { { -1, 0, -1 }, { -1, 0, 1 }, { -1, 0, 1 } };
+            return Py;
+        }
         public Color[,] ApplyEdgeDetection(Color[,] Image, double[,] kernel)
         {
             int kernelSize = kernel.GetLength(0);
             int offset = kernelSize / 2;
-            Color[,] newImage = Image, newImageX = Image, newImageY = Image;
-
-            //calc x image
-            for (int y = 0; y < InputImage.Size.Height; y++)
-                if (y >= offset && y < InputImage.Size.Height - offset)
-                    for (int x = 0; x < InputImage.Size.Width; x++)
-                        if (x >= offset && x < InputImage.Size.Width - offset)
+            Color[,] newImage = new Color[InputImage.Size.Width,InputImage.Size.Height];
+            for (int y = 1; y < InputImage.Size.Height - 1; y++)
+            {
+                for (int x = 1; x < InputImage.Size.Width - 1; x++)
+                {
+                    double redx = 0;
+                    double grnx = 0;
+                    double blux = 0;
+                    for (int v = -offset, kj = 0; v <= offset; v++, kj++)
+                        for (int u = -offset, ki = 0; u <= offset; u++, ki++)
                         {
-                            double red = 0;//= Image[x, y - 1].R + Image[x + 1, y].R + Image[x, y + 1].R + Image[x - 1, y].R - 4 * Image[x, y].R;
-                            double grn = 0;// Image[x, y - 1].G + Image[x + 1, y].G + Image[x, y + 1].G + Image[x - 1, y].G - 4 * Image[x, y].G;
-                            double blu = 0;//= Image[x, y - 1].B + Image[x + 1, y].B + Image[x, y + 1].B + Image[x - 1, y].B - 4 * Image[x, y].B;
-
-                            double[,] kernelX = new double[,] { { -1, 0, 1 }, { -1, 0, 1 }, { -1, 0, 1 } };
-                            double[,] kernelY = new double[,] { { -1, -1, -1 }, { 0, 0, 0 }, { 1, 1, 1 } };
-
-                            // calc x
-                            for (int v = -offset, kv = 0; v <= offset; v++, kv++)
-                                for (int u = -offset, ku = 0; u <= offset; u++, ku++)
-                                {
-                                    red += Image[x + u, y + v].G * kernelX[ku, kv];
-                                    grn += Image[x + u, y + v].B * kernelX[ku, kv];
-                                    blu += Image[x + u, y + v].R * kernelX[ku, kv];
-                                }
-
-                            red /= 6;
-                            grn /= 6;
-                            blu /= 6;
-
-                            red = Clamp(red);
-                            grn = Clamp(grn);
-                            blu = Clamp(blu);
-
-                            newImageX[x, y] = Color.FromArgb((int)red, (int)grn, (int)blu);
-
-                            // calc y
-                            for (int v = -offset, kv = 0; v <= offset; v++, kv++)
-                                for (int u = -offset, ku = 0; u <= offset; u++, ku++)
-                                {
-                                    red += Image[x + u, y + v].G * kernelY[ku, kv];
-                                    grn += Image[x + u, y + v].B * kernelY[ku, kv];
-                                    blu += Image[x + u, y + v].R * kernelY[ku, kv];
-                                }
-
-                            red /= 6;
-                            grn /= 6;
-                            blu /= 6;
-
-                            red = Clamp(red);
-                            grn = Clamp(grn);
-                            blu = Clamp(blu);
-
-                            newImageY[x, y] = Color.FromArgb((int)red, (int)grn, (int)blu);
-
-                            red = Math.Sqrt((newImageX[x, y].R * newImageX[x, y].R) + (newImageY[x, y].R * newImageY[x, y].R));
-                            grn = Math.Sqrt((newImageX[x, y].G * newImageX[x, y].G) + (newImageY[x, y].G * newImageY[x, y].G));
-                            blu = Math.Sqrt((newImageX[x, y].B * newImageX[x, y].B) + (newImageY[x, y].B * newImageY[x, y].B));
-
-                            red = Clamp(red);
-                            grn = Clamp(grn);
-                            blu = Clamp(blu);
-
-                            newImage[x, y] = Color.FromArgb((int)red, (int)grn, (int)blu);
+                            redx += Image[x + u, y + v].G * kernel[ki, kj];
+                            grnx += Image[x + u, y + v].B * kernel[ki, kj];
+                            blux += Image[x + u, y + v].R * kernel[ki, kj];
                         }
-            return newImageX;
+                    newImage[x, y] = Color.FromArgb((int)Clamp(redx), (int)Clamp(grnx), (int)Clamp(blux));
+                }
+            }
+            return newImage;
         }
-        //Exercise 7: Thresholding
         public Color[,] ApplyThresholding(Color[,] Image, int threshold, bool invert)
         {
             Color[,] newImage = Image;
@@ -407,10 +381,9 @@ namespace INFOIBV
             }
             return newImage;
         }
-        //Bonus 1: Histogram equalization
         public Color[,] ApplyEqualization(Color[,] Image)
         {
-            ColorHistogram colorHistogram = new ColorHistogram(Image);
+            ColorHistogram colorHistogram = new ColorHistogram(Image, InputImage.Size.Height, InputImage.Size.Width);
             for (int y = 0; y < InputImage.Size.Height; y++)
             {
                 for (int x = 0; x < InputImage.Size.Width; x++)
@@ -429,14 +402,11 @@ namespace INFOIBV
 
                 }
             }
-                return Image;
-            }
-        //Bonus 2: Edge sharpening
-        public Color[,] ApplyEdgeSharpening()
-        {
-            Color[,] Image = null;
-
             return Image;
+        }
+        public Color[,] ApplyEdgeSharpening(Color[,] Image)
+        {
+            return ApplyEdgeDetection(Image, Laplacian3x3);
         }
 
         private void saveButton_Click(object sender, EventArgs e)
