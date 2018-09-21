@@ -22,20 +22,25 @@ namespace INFOIBV
         public int AgHigh = 0;
         public int AbLow = 0;
         public int AbHigh = 0;
+        public int height = 0;
+        public int width = 0;
 
-        public ColorHistogram(Color[,] Image)
+        public ColorHistogram(Color[,] Image, int h, int w)
         {
+            height = h;
+            width = w;
             ComputeColorHistogram(Image);
             ComputeLowAndHigh();
             ComputeCummulativeHistogram(Image);
+          
         }
 
 
         public void ComputeColorHistogram(Color[,] Image)
         {
-            for (int x = 0; x < 256; x++)
+            for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < 256; y++)
+                for (int y = 0; y < height; y++)
                 {
                     Color pixelColor = Image[x, y];
                     HistogramR[pixelColor.R]++;
