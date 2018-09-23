@@ -15,6 +15,7 @@ namespace INFOIBV
     {
         private Bitmap InputImage;
         private Bitmap OutputImage;
+        private String ContextString = "";
 
 
 
@@ -41,72 +42,94 @@ namespace INFOIBV
 
         private void applyButton_Click(object sender, EventArgs e)
         {
-            if (InputImage == null) return;                                 // Get out if no input image
-            if (OutputImage != null) OutputImage.Dispose();                 // Reset output image
-            OutputImage = new Bitmap(InputImage.Size.Width, InputImage.Size.Height); // Create new output image
-            Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // Create array to speed-up operations (Bitmap functions are very slow)
 
-            // Setup progress bar
-            progressBar.Visible = true;
-            progressBar.Minimum = 1;
-            progressBar.Maximum = InputImage.Size.Width * InputImage.Size.Height;
-            progressBar.Value = 1;
-            progressBar.Step = 1;
-            // Copy input Bitmap to array            
-            for (int x = 0; x < InputImage.Size.Width; x++)
+            if (ContextString.Equals(""))
             {
-                for (int y = 0; y < InputImage.Size.Height; y++)
-                {
-                    Image[x, y] = InputImage.GetPixel(x, y);                // Set pixel color in array at (x,y)
-                }
+                MessageBox.Show("Please select an operation to apply");
             }
-
-            //==========================================================================================
-            // TODO: include here your own code
-            // example: create a negative image
-            //   Image = ApplyNegation(Image);
-            //==========================================================================================
-           
-            //Exercise 1: Applying grayscale
-            Image = ApplyGrayScale(Image);
-
-            //Exercise 2: Contrast adjustment
-            Image = ApplyContrastAdjustment(Image);
-
-            //Exercise 3: Create Gaussian filter
-            double[,] GaussianKernel = CreateGaussianFilter(11, 3);
-
-            //Exercise 4: Linear filtering:
-            Image = ApplyLinearFiltering(Image, GaussianKernel);
-
-            //Exercise 5: non-linear filtering:
-            Image = ApplyNonLinearFiltering(Image, 25);
-
-            //Exercise 6: Edge detection
-            Image = ApplyEdgeDetection(Image, Sobelx());
-
-            //Exercise 7: Thresholding
-            Image = ApplyThresholding(Image, 20, false);
-
-            //Bonus 1: Histogram equalization
-            Image = ApplyEqualization(Image);
-
-            //Bonus 2: Edge Sharpening
-            Image = ApplyEdgeSharpening(Image);
-
-            for (int x = 0; x < InputImage.Size.Width; x++)
+            else
             {
-                for (int y = 0; y < InputImage.Size.Height; y++)
+
+
+                if (InputImage == null) return;                                 // Get out if no input image
+                if (OutputImage != null) OutputImage.Dispose();                 // Reset output image
+                OutputImage = new Bitmap(InputImage.Size.Width, InputImage.Size.Height); // Create new output image
+                Color[,] Image = new Color[InputImage.Size.Width, InputImage.Size.Height]; // Create array to speed-up operations (Bitmap functions are very slow)
+
+                // Setup progress bar
+                progressBar.Visible = true;
+                progressBar.Minimum = 1;
+                progressBar.Maximum = InputImage.Size.Width * InputImage.Size.Height;
+                progressBar.Value = 1;
+                progressBar.Step = 1;
+                // Copy input Bitmap to array            
+                for (int x = 0; x < InputImage.Size.Width; x++)
                 {
-                    OutputImage.SetPixel(x, y, Image[x, y]);               // Set the pixel color at coordinate (x,y)
+                    for (int y = 0; y < InputImage.Size.Height; y++)
+                    {
+                        Image[x, y] = InputImage.GetPixel(x, y);                // Set pixel color in array at (x,y)
+                    }
                 }
+
+                //==========================================================================================
+                // TODO: include here your own code
+                // example: create a negative image
+                //   Image = ApplyNegation(Image);
+                //==========================================================================================
+                switch (ContextString) {
+                    //Exercise 1: Applying grayscale
+                    case "Grayscale":
+                        Image = ApplyGrayScale(Image);
+                        break;
+                    //Exercise 2: Contrast adjustment
+                    case "Contrast adjustment":
+                        Image = ApplyContrastAdjustment(Image);
+                        break;
+                    //Exercise 3 & 4: Create Gaussian filter  Linear filtering
+                    case "Gaussian filter":
+                        double[,] GaussianKernel = CreateGaussianFilter(11, 3);
+                        Image = ApplyLinearFiltering(Image, GaussianKernel);
+                        break;
+                    //Exercise 5: non-linear filtering:
+                    case "Median filter":
+                        Image = ApplyNonLinearFiltering(Image, 25);
+                        break;
+                    //Exercise 6: Edge detection
+                    case "Edge detection":
+                        Image = ApplyEdgeDetection(Image, Sobelx());
+                        break;
+                    //Exercise 7: Thresholding
+                    case "Thresholding":
+                        Image = ApplyThresholding(Image, 20, false);
+                        break;
+                    //Bonus 1: Histogram equalization
+                    case "Histogram equalization":
+                        Image = ApplyEqualization(Image);
+                        break;
+                    //Bonus 2: Edge Sharpening
+                    case "Edge sharpening":
+                        Image = ApplyEdgeSharpening(Image);
+                        break;
+                    default:
+                        MessageBox.Show("Select a valid option");
+                        break;
+                }
+
+                
+                for (int x = 0; x < InputImage.Size.Width; x++)
+                {
+                    for (int y = 0; y < InputImage.Size.Height; y++)
+                    {
+                        OutputImage.SetPixel(x, y, Image[x, y]);               // Set the pixel color at coordinate (x,y)
+                    }
+                }
+                pictureBox2.Image = (Image)OutputImage;                         // Display output image
+                progressBar.Visible = false;                                    // Hide progress bar
             }
-            pictureBox2.Image = (Image)OutputImage;                         // Display output image
-            progressBar.Visible = false;                                    // Hide progress bar
         }
 
 
-        //All Written Methods
+        //All Exercise used methods
         public Color[,] CutEdges(Color[,] Image, int borderSize)
         {
             Color[,] newImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
@@ -210,7 +233,7 @@ namespace INFOIBV
             int kernelSize = kernel.GetLength(0);
             int offset = kernelSize / 2;
             int kernel2 = kernel.Length;
-            Color[,] newImage = inputImage;
+            Color[,] newImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
             for (int y = 0; y < InputImage.Size.Height; y++)
             {
                 if (y >= offset && y < InputImage.Size.Height - offset)
@@ -256,7 +279,7 @@ namespace INFOIBV
             int kernelSize = (int)Math.Sqrt(medianSize);
             int median = medianSize / 2;
             int offset = kernelSize / 2;
-            Color[,] newImage = inputImage;
+            Color[,] newImage = new Color[InputImage.Size.Width, InputImage.Size.Height];
 
 
 
@@ -416,5 +439,14 @@ namespace INFOIBV
                 OutputImage.Save(saveImageDialog.FileName);                 // Save the output image
         }
 
+        private void label1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ContextString = comboBox1.Text;
+        }
     }
 }
